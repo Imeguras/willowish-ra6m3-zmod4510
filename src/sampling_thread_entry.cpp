@@ -22,55 +22,7 @@ typedef enum e_demo_callback_status
 bool g_comms_i2c_bus0_setup = false;
 volatile demo_callback_status_t            gs_i2c_callback_status = DEMO_CALLBACK_STATUS_WAIT;
 
- void led_update(led_state_t led_state, e_bsp_io_level value){
-	//BSP_IO_LEVEL_LOW
-	//BSP_IO_LEVEL_HIGH
-   R_BSP_PinAccessEnable();
-    switch(led_state){
-        case red:
-        {
-
-            R_IOPORT_PinWrite(&g_ioport_ctrl, (bsp_io_port_pin_t) g_bsp_leds.p_leds[2], value);
-            break;
-        }
-        case green:
-        {
-
-            R_IOPORT_PinWrite(&g_ioport_ctrl, (bsp_io_port_pin_t) g_bsp_leds.p_leds[1], value);
-
-            break;
-        }
-        case blue:
-        {
-            /* Blue LED state is made high to show operation is in progress */
-            R_IOPORT_PinWrite(&g_ioport_ctrl, (bsp_io_port_pin_t) g_bsp_leds.p_leds[0], value);
-            break;
-        }
-        default:
-        {
-            break;
-        }
-    }
-    R_BSP_PinAccessDisable();
-}
- void zmod4xxx_sensor0_comms_i2c_callback(rm_zmod4xxx_callback_args_t * p_args)
- {
-     if ((RM_ZMOD4XXX_EVENT_DEV_ERR_POWER_ON_RESET == p_args->event)
-      || (RM_ZMOD4XXX_EVENT_DEV_ERR_ACCESS_CONFLICT == p_args->event))
-     {
-         gs_i2c_callback_status = DEMO_CALLBACK_STATUS_DEVICE_ERROR;
-     }
-     else if (RM_ZMOD4XXX_EVENT_ERROR == p_args->event)
-     {
-         gs_i2c_callback_status = DEMO_CALLBACK_STATUS_REPEAT;
-     }
-     else
-     {
-         gs_i2c_callback_status = DEMO_CALLBACK_STATUS_SUCCESS;
-     }
- }
- void g_zmod4xxx_sensor0_quick_setup(void);
-
+void led_update(led_state_t led_state, e_bsp_io_level value);
 /* Sampling Thread entry function */
 void sampling_thread_entry(void) {
 	float humidity = 70;
@@ -117,7 +69,7 @@ void sampling_thread_entry(void) {
 	}
 	    /* Open ZMOD4XXX */
 
-	 //g_zmod4xxx_sensor0_quick_setup();
+
 
 
 	//led_update(red, BSP_IO_LEVEL_LOW);
@@ -169,13 +121,53 @@ void zmod4xxx_sensor0_irq_callback(rm_zmod4xxx_callback_args_t * p_args)
     FSP_PARAMETER_NOT_USED(p_args);
 #endif
 }
-void g_zmod4xxx_sensor0_quick_setup(void){
-    fsp_err_t err;
-    /* Open ZMOD4XXX sensor instance, this must be done before calling any ZMOD4XXX API */
-    err = RM_ZMOD4XXX_Open(g_zmod4xxx_sensor0.p_ctrl, g_zmod4xxx_sensor0.p_cfg);
-    if (FSP_SUCCESS != err)
-    {
-        tx_thread_delete(&sampling_thread);
+
+ void led_update(led_state_t led_state, e_bsp_io_level value){
+	//BSP_IO_LEVEL_LOW
+	//BSP_IO_LEVEL_HIGH
+   R_BSP_PinAccessEnable();
+    switch(led_state){
+        case red:
+        {
+
+            R_IOPORT_PinWrite(&g_ioport_ctrl, (bsp_io_port_pin_t) g_bsp_leds.p_leds[2], value);
+            break;
+        }
+        case green:
+        {
+
+            R_IOPORT_PinWrite(&g_ioport_ctrl, (bsp_io_port_pin_t) g_bsp_leds.p_leds[1], value);
+
+            break;
+        }
+        case blue:
+        {
+            /* Blue LED state is made high to show operation is in progress */
+            R_IOPORT_PinWrite(&g_ioport_ctrl, (bsp_io_port_pin_t) g_bsp_leds.p_leds[0], value);
+            break;
+        }
+        default:
+        {
+            break;
+        }
     }
+    R_BSP_PinAccessDisable();
 }
+ void zmod4xxx_sensor0_comms_i2c_callback(rm_zmod4xxx_callback_args_t * p_args)
+ {
+     if ((RM_ZMOD4XXX_EVENT_DEV_ERR_POWER_ON_RESET == p_args->event)
+      || (RM_ZMOD4XXX_EVENT_DEV_ERR_ACCESS_CONFLICT == p_args->event))
+     {
+         gs_i2c_callback_status = DEMO_CALLBACK_STATUS_DEVICE_ERROR;
+     }
+     else if (RM_ZMOD4XXX_EVENT_ERROR == p_args->event)
+     {
+         gs_i2c_callback_status = DEMO_CALLBACK_STATUS_REPEAT;
+     }
+     else
+     {
+         gs_i2c_callback_status = DEMO_CALLBACK_STATUS_SUCCESS;
+     }
+ }
+
 
