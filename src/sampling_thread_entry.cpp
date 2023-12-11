@@ -49,15 +49,17 @@ void sampling_thread_entry(void) {
 	bool stabilization=false;
 	for(int i =0; i <901; i++){
 		g_zmod4xxx_sensor0.p_api->measurementStart(g_zmod4xxx_sensor0.p_ctrl);
-		
+		//TODO: use processor timer instead of an actual delay as we can use time stuck post'ing as wait time for sensor
 		R_BSP_SoftwareDelay(2,BSP_DELAY_UNITS_SECONDS);
 		g_zmod4xxx_sensor0.p_api->read(g_zmod4xxx_sensor0.p_ctrl, &raw_data);
 		g_zmod4xxx_sensor0.p_api->temperatureAndHumiditySet(g_zmod4xxx_sensor0.p_ctrl, temperature, humidity);
+
+		auto k =g_zmod4xxx_sensor0.p_api->oaq2ndGenDataCalculate(g_zmod4xxx_sensor0.p_ctrl, &raw_data, &gs_oaq_2nd_gen_data);
 		g_zmod4xxx_sensor0.p_api->measurementStop(g_zmod4xxx_sensor0.p_ctrl);
-		auto k = g_zmod4xxx_sensor0.p_api->oaq2ndGenDataCalculate(g_zmod4xxx_sensor0.p_ctrl, &raw_data, &gs_oaq_2nd_gen_data);
+
 
 		if (k == FSP_ERR_SENSOR_IN_STABILIZATION ){
-			i=0;
+			//i=0;
 			if(stabilization ==false){
 				stabilization = true;
 				led_update(red, BSP_IO_LEVEL_HIGH);
@@ -84,14 +86,14 @@ void sampling_thread_entry(void) {
 
 	while (1) {
 		//TODO shitty code should be function but at this point i dont care
-		g_zmod4xxx_sensor0.p_api->measurementStart(g_zmod4xxx_sensor0.p_ctrl);
-		//TODO: use processor timer instead of an actual delay as we can use time stuck post'ing as wait time for sensor
-		R_BSP_SoftwareDelay(2,BSP_DELAY_UNITS_SECONDS);
-		g_zmod4xxx_sensor0.p_api->read(g_zmod4xxx_sensor0.p_ctrl, &raw_data);
-		g_zmod4xxx_sensor0.p_api->temperatureAndHumiditySet(g_zmod4xxx_sensor0.p_ctrl, temperature, humidity);
-		g_zmod4xxx_sensor0.p_api->measurementStop(g_zmod4xxx_sensor0.p_ctrl);
-		g_zmod4xxx_sensor0.p_api->oaq2ndGenDataCalculate(g_zmod4xxx_sensor0.p_ctrl, &raw_data, &gs_oaq_2nd_gen_data);
+				g_zmod4xxx_sensor0.p_api->measurementStart(g_zmod4xxx_sensor0.p_ctrl);
+				//TODO: use processor timer instead of an actual delay as we can use time stuck post'ing as wait time for sensor
+				R_BSP_SoftwareDelay(2,BSP_DELAY_UNITS_SECONDS);
+				g_zmod4xxx_sensor0.p_api->read(g_zmod4xxx_sensor0.p_ctrl, &raw_data);
+				g_zmod4xxx_sensor0.p_api->temperatureAndHumiditySet(g_zmod4xxx_sensor0.p_ctrl, temperature, humidity);
 
+				g_zmod4xxx_sensor0.p_api->oaq2ndGenDataCalculate(g_zmod4xxx_sensor0.p_ctrl, &raw_data, &gs_oaq_2nd_gen_data);
+				g_zmod4xxx_sensor0.p_api->measurementStop(g_zmod4xxx_sensor0.p_ctrl);
 	}
 }
 void g_comms_i2c_bus0_quick_setup(TX_THREAD* thread_ptr)
