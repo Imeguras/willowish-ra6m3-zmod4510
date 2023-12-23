@@ -124,9 +124,9 @@ void communication_thread0_entry(void){
     g_ip0_quick_setup();
     g_web_http_client0_quick_setup();
 
-    /* TODO: add your own code here */
+
     while (1){
-        while(__index<=MIGRATION_SIZE || data_aqi_queue.tx_queue_capacity>0 ){
+        while(__index<=MIGRATION_SIZE || data_aqi_queue.tx_queue_enqueued>0 ){
             tx_queue_receive(&data_aqi_queue,(rm_zmod4xxx_oaq_2nd_data_t *)&brap_data[__index], TX_WAIT_FOREVER);
 
         }

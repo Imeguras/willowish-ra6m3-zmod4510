@@ -480,14 +480,15 @@ void data_thread_entry (void){
         double temperature = data.temperature.integer_part+(data.temperature.decimal_part*0.01);
         double humidity = data.humidity.integer_part+(data.humidity.decimal_part*0.01);
         stabilization=g_zmod4xxx_sensor0_quick_getting_oaq_2nd_gen_data(&p_gas_data, (float)temperature, (float)humidity);
+        if(data_aqi_queue.tx_queue_available_storage>32){
+             tx_queue_send(&data_aqi_queue,&p_gas_data, TX_NO_WAIT);
+         }else{
+             R_BSP_SoftwareDelay(20, BSP_DELAY_UNITS_SECONDS);
+         }
+
          if(stabilization==true&&openLed==false){
              openLed=true;
              led_update(green, BSP_IO_LEVEL_HIGH);
-             if(data_aqi_queue.tx_queue_available_storage>32){
-                 tx_queue_send(&data_aqi_queue,&p_gas_data, TX_NO_WAIT);
-             }else{
-                 R_BSP_SoftwareDelay(20, BSP_DELAY_UNITS_SECONDS);
-             }
 
 
          }

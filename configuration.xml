@@ -297,9 +297,9 @@
     </module>
     <module id="module.azure.nxd.ip.982886795">
       <property id="module.azure.nxd.ip.name" value="g_ip0"/>
-      <property id="module.azure.nxd.ip.address" value="192.168.0.2"/>
+      <property id="module.azure.nxd.ip.address" value="192.168.1.125"/>
       <property id="module.azure.nxd.ip.subnet_mask" value="255.255.255.0"/>
-      <property id="module.azure.nxd.ip.gateway_address" value="192.168.0.1"/>
+      <property id="module.azure.nxd.ip.gateway_address" value="192.168.1.1"/>
       <property id="module.azure.nxd.ipv6.address_global" value="2001:0:0:0:0:0:0:1"/>
       <property id="module.azure.nxd.ipv6.address_local" value="0:0:0:0:0:0:0:0"/>
       <property id="module.azure.nxd.ip.stack_size" value="2048"/>
