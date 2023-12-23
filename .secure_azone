@@ -114,9 +114,11 @@
             <slot name="PB01" secure="true"/>
         </peripheral>
         <peripheral name="SCI6" group="SCI" security=""/>
+        <peripheral name="ETHERC0" group="ETHERC" security=""/>
         <peripheral name="ICU">
             <slot name="IRQ0" secure="true"/>
             <slot name="IRQ1" secure="true"/>
+            <slot name="IRQ2" secure="true"/>
         </peripheral>
     </partition>
 </azone>
