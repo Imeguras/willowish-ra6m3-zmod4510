@@ -1,4 +1,9 @@
 #include "communication_thread0.h"
+#include "server_certificate.h"
+#include  "nx_api.h"
+#include  <nx_crypto.h>
+#include  <nx_secure_tls_api.h>
+#include  <nx_secure_x509.h>
 
 /* Packet pool instance (If this is a Trustzone part, the memory must be placed in Non-secure memory). */
 NX_PACKET_POOL g_packet_pool0;
@@ -92,6 +97,15 @@ void g_ip0_quick_setup()
     assert(NX_SUCCESS == status);
     assert(NX_IP_LINK_ENABLED == current_state);
 }
+NX_SECURE_X509_CERT trusted_certificate;
+#define NX_WEB_HTTP_SESSION_MAX 2
+/* Define TLS data for HTTPS. */
+CHAR crypto_metadata[8928 * NX_WEB_HTTP_SESSION_MAX];
+UCHAR tls_packet_buffer[16500];
+NX_SECURE_X509_CERT remote_certificate, remote_issuer;
+UCHAR remote_cert_buffer[2000];
+UCHAR remote_issuer_buffer[2000];
+extern const NX_SECURE_TLS_CRYPTO nx_crypto_tls_ciphers;
 
 /* Web HTTP Client instance. */
 NX_WEB_HTTP_CLIENT  g_web_http_client0;
@@ -115,6 +129,35 @@ void g_web_http_client0_quick_setup()
 }
 #define MIGRATION_SIZE 100
 rm_zmod4xxx_oaq_2nd_data_t brap_data[MIGRATION_SIZE];
+
+UINT tls_setup_callback(NX_WEB_HTTP_CLIENT *client_ptr,NX_SECURE_TLS_SESSION *tls_session){
+    UINT status;
+
+    /* Initialize and create TLS session. */
+    nx_secure_tls_session_create(tls_session, &nx_crypto_tls_ciphers,crypto_metadata, sizeof(crypto_metadata));
+
+    /* Allocate space for packet reassembly. */
+    nx_secure_tls_session_packet_buffer_set(tls_session, tls_packet_buffer,sizeof(tls_packet_buffer));
+
+
+    /* Add a CA Certificate to our trusted store for verifying incoming server
+        certificates. */
+    nx_secure_x509_certificate_initialize(&trusted_certificate,(UCHAR *) g_server_certificate, strlen(g_server_certificate),
+            NX_NULL, 0, NULL, 0,NX_SECURE_X509_KEY_TYPE_NONE);
+    nx_secure_tls_trusted_certificate_add(tls_session, &trusted_certificate);
+
+    /* Need to allocate space for the certificate coming in from the remote host. */
+    nx_secure_tls_remote_certificate_allocate(tls_session, &remote_certificate,
+        remote_cert_buffer, sizeof(remote_cert_buffer));
+    nx_secure_tls_remote_certificate_allocate(tls_session,
+        &remote_issuer, remote_issuer_buffer,
+        sizeof(remote_issuer_buffer));
+
+    return(NX_SUCCESS);
+ }
+
+#define HOST_HEADER "Host"
+#define HOST_HEADER_SIZE 5
 /* Communication Thread entry function */
 void communication_thread0_entry(void){
     int __index=0;
@@ -123,14 +166,33 @@ void communication_thread0_entry(void){
 
     g_ip0_quick_setup();
     g_web_http_client0_quick_setup();
+    /* Setup the platform; initialize the SCE and the TRNG */
+    uint32_t err = nx_crypto_initialize();
+    assert(NX_CRYPTO_SUCCESS == err);
+
+    nx_secure_tls_initialize();
+    //_nx_web_http_client_get_secure_start(NX_WEB_HTTP_CLIENT *client_ptr, NXD_ADDRESS *server_ip, UINT server_port, CHAR *resource,CHAR *host, CHAR *username, CHAR *password,UINT (*tls_setup)(NX_WEB_HTTP_CLIENT *client_ptr, NX_SECURE_TLS_SESSION *),ULONG wait_option);
+    //nx_web_http_client_secure_connect(&g_web_http_client0, &end_point, 443,tls_setup_callback, TX_WAIT_FOREVER);
+
+    volatile UINT _t = NX_SUCCESS;
+
+
+    _t =  nx_web_http_client_get_secure_start(&g_web_http_client0, &end_point, 443,HOST_END_POINT,(CHAR *)"/api/v1/User","", "", tls_setup_callback, TX_WAIT_FOREVER);
+    //apparently microsoft thought putting a HOST header on this made sense(which although it eases the process with azure or any other cloud/vps/ any serious provider, they underestimate the lack of money there is);
+
+   //_f = nx_web_http_client_request_header_add(&g_web_http_client0, (CHAR *)HOST_HEADER, HOST_HEADER_SIZE,(CHAR *) HOST_END_POINT, HOST_END_POINT_SIZE(), TX_WAIT_FOREVER);
+   // status =  nx_web_http_client_response_body_get(&my_client, &my_packet, 20);
 
 
     while (1){
         while(__index<=MIGRATION_SIZE || data_aqi_queue.tx_queue_enqueued>0 ){
             tx_queue_receive(&data_aqi_queue,(rm_zmod4xxx_oaq_2nd_data_t *)&brap_data[__index], TX_WAIT_FOREVER);
-
         }
+
+        //nx_http_client_put_start(&my_client, &server_ip_address, "/client_test.htm", "name", "password", 103, 500);
+
         __index=0;
+		
 
 
 

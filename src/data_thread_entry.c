@@ -501,27 +501,22 @@ void led_update(led_state_t led_state, bsp_io_level_t value){
     //BSP_IO_LEVEL_HIGH
    R_BSP_PinAccessEnable();
     switch(led_state){
-        case red:
-        {
+        case red:{
 
             R_IOPORT_PinWrite(&g_ioport_ctrl, (bsp_io_port_pin_t) g_bsp_leds.p_leds[2], value);
             break;
         }
-        case green:
-        {
-
+        case green:{
             R_IOPORT_PinWrite(&g_ioport_ctrl, (bsp_io_port_pin_t) g_bsp_leds.p_leds[1], value);
 
             break;
         }
-        case blue:
-        {
+        case blue:{
             /* Blue LED state is made high to show operation is in progress */
             R_IOPORT_PinWrite(&g_ioport_ctrl, (bsp_io_port_pin_t) g_bsp_leds.p_leds[0], value);
             break;
         }
-        default:
-        {
+        default:{
             break;
         }
     }
