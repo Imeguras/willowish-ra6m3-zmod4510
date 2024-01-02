@@ -646,7 +646,7 @@ FSP Configuration
     Web HTTP: Common: Maximum password length (bytes): 20
     Web HTTP: Common: Maximum username length (bytes): 20
     Web HTTP: Client: Minimum packet size (bytes): 300
-    Web HTTP: Client: HTTPS Support: Enable
+    Web HTTP: Client: HTTPS Support: Disable
     SMTP: Client: TCP window size (bytes): 1460
     SMTP: Client: Packet allocation timeout (seconds): 2
     SMTP: Client: TCP socket connect timeout (seconds): 10
@@ -1017,7 +1017,7 @@ FSP Configuration
     Web HTTP: Common: Maximum password length (bytes): 20
     Web HTTP: Common: Maximum username length (bytes): 20
     Web HTTP: Client: Minimum packet size (bytes): 300
-    Web HTTP: Client: HTTPS Support: Enable
+    Web HTTP: Client: HTTPS Support: Disable
     SMTP: Client: TCP window size (bytes): 1460
     SMTP: Client: Packet allocation timeout (seconds): 2
     SMTP: Client: TCP socket connect timeout (seconds): 10
@@ -1388,7 +1388,7 @@ FSP Configuration
     Web HTTP: Common: Maximum password length (bytes): 20
     Web HTTP: Common: Maximum username length (bytes): 20
     Web HTTP: Client: Minimum packet size (bytes): 300
-    Web HTTP: Client: HTTPS Support: Enable
+    Web HTTP: Client: HTTPS Support: Disable
     SMTP: Client: TCP window size (bytes): 1460
     SMTP: Client: Packet allocation timeout (seconds): 2
     SMTP: Client: TCP socket connect timeout (seconds): 10
@@ -1775,7 +1775,7 @@ FSP Configuration
     Web HTTP: Common: Maximum password length (bytes): 20
     Web HTTP: Common: Maximum username length (bytes): 20
     Web HTTP: Client: Minimum packet size (bytes): 300
-    Web HTTP: Client: HTTPS Support: Enable
+    Web HTTP: Client: HTTPS Support: Disable
     SMTP: Client: TCP window size (bytes): 1460
     SMTP: Client: Packet allocation timeout (seconds): 2
     SMTP: Client: TCP socket connect timeout (seconds): 10
@@ -1988,39 +1988,6 @@ FSP Configuration
     Common: Interface Capability: Disable
     Azure IoT: Defender Security Module: Disable
     
-  Module "Azure RTOS NetX Secure"
-    Self Signed Certificates: Disable
-    Client Certificate Verify: Disable
-    AEAD Cipher Suite: Disable
-    PSK Cipher Suite: Disable
-    ECC Cipher Suite: Enable
-    X509 Strict Name Compare: Disable
-    X509 Extended Distinguished Names: Disable
-    TLS v1.3: Enable
-    TLS v1.0: Disable
-    TLS v1.1 Legacy Mode: Disable
-    TLS v1.1: Disable
-    Server Mode: Enable
-    Client Mode: Enable
-    Error Checking: Enable
-    DTLS: Disable
-    
-  Module "Azure RTOS NetX Crypto"
-  Module "Azure RTOS NetX Crypto HW Acceleration (rm_netx_secure_crypto)"
-    Standalone Usage: Use with TLS
-    Hardware Acceleration: TRNG: Enabled
-    Hardware Acceleration: Hash: SHA256/224: Use Hardware
-    Hardware Acceleration: Cipher: AES: Use Hardware
-    Hardware Acceleration: Public Key Cryptography (PKC): ECC:  ECC: Use Hardware
-    Hardware Acceleration: Public Key Cryptography (PKC): ECC:  ECDSA Scratch Buffer Size (Bytes): 3016
-    Hardware Acceleration: Public Key Cryptography (PKC): ECC:  ECDH Scratch Buffer Size (Bytes): 2464
-    Hardware Acceleration: Public Key Cryptography (PKC): RSA: RSA: Use Hardware
-    Hardware Acceleration: Public Key Cryptography (PKC): RSA: RSA 2048 (HW): Enabled
-    Hardware Acceleration: Public Key Cryptography (PKC): RSA: RSA 3072 Verify/Encryption (HW): Disabled
-    Hardware Acceleration: Public Key Cryptography (PKC): RSA: RSA 4096 Verify/Encryption (HW): Disabled
-    Hardware Acceleration: Public Key Cryptography (PKC): RSA: RSA Scratch Buffer Size (Bytes): Disabled (HW)
-    
-  Module "SCE Compatibility Mode"
   Azure RTOS ThreadX
     General: Custom tx_user.h: 
     General: Error Checking: Enabled
@@ -2144,7 +2111,7 @@ FSP Configuration
   Thread "Communication Thread"
     Symbol: communication_thread0
     Name: Communication Thread
-    Stack size (bytes): 1024
+    Stack size (bytes): 0x8000
     Priority: 6
     Auto start: Enabled
     Time slicing interval (ticks): 1
@@ -2210,11 +2177,6 @@ FSP Configuration
         Packet Size (bytes): 1568
         Number of Packets in Pool: 16
         
-      Instance "Azure RTOS NetX Secure"
-        Instance "Azure RTOS NetX Crypto"
-          Instance "Azure RTOS NetX Crypto HW Acceleration (rm_netx_secure_crypto)"
-            Instance "SCE Compatibility Mode"
-        Instance "Azure RTOS NetX Duo Common"
   Object "data_aqi_queue Queue"
     Name: Data Queue
     Symbol: data_aqi_queue

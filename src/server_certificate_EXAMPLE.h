@@ -41,7 +41,7 @@ static const UCHAR g_server_certificate[]= "-----BEGIN CERTIFICATE-----"        
                                            "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"\
                                            "AAAAAAAAAAAAAAAA"                                                \
                                            "-----END CERTIFICATE-----";
-NXD_ADDRESS end_point= {NX_IP_VERSION_V4,IP_ADDRESS(0,0,0,0)};
+NXD_ADDRESS end_point= {NX_IP_VERSION_V4,{IP_ADDRESS(0,0,0,0)}};
 #define HOST_END_POINT "subdomain.domain.tld"
 #define HOST_END_POINT_SIZE() (strlen(HOST_END_POINT))
 #endif /* SERVER_CERTIFICATE_H_ */

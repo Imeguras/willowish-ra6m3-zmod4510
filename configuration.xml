@@ -224,28 +224,12 @@
       <description>Ethernet</description>
       <originalPack>Renesas.RA.5.1.0.pack</originalPack>
     </component>
-    <component apiversion="" class="HAL Drivers" condition="" group="all" subgroup="r_sce9_ra6_plaintext" variant="" vendor="Renesas" version="5.1.0">
-      <description>Secure Cryptography Engine on RA6 (SCE9) Compatibility Mode</description>
-      <originalPack>Renesas.RA.5.1.0.pack</originalPack>
-    </component>
     <component apiversion="" class="Middleware" condition="" group="all" subgroup="rm_netxduo_ether" variant="" vendor="Renesas" version="5.1.0">
       <description>NetX Duo Ethernet Driver</description>
       <originalPack>Renesas.RA.5.1.0.pack</originalPack>
     </component>
-    <component apiversion="" class="Middleware" condition="" group="all" subgroup="rm_netx_secure_crypto" variant="" vendor="Renesas" version="5.1.0">
-      <description>NetX Secure Crypto H/W Acceleration</description>
-      <originalPack>Renesas.RA.5.1.0.pack</originalPack>
-    </component>
     <component apiversion="" class="Azure" condition="" group="NetX Duo" subgroup="nxd" variant="" vendor="Microsoft" version="6.2.1+renesas.1.fsp.5.1.0">
       <description>Azure RTOS NetX Duo</description>
-      <originalPack>Microsoft.NetXDuo.6.2.1+renesas.1.fsp.5.1.0.pack</originalPack>
-    </component>
-    <component apiversion="" class="Azure" condition="" group="NetX Duo" subgroup="nx_crypto" variant="" vendor="Microsoft" version="6.2.1+renesas.1.fsp.5.1.0">
-      <description>Azure RTOS NetX Crypto</description>
-      <originalPack>Microsoft.NetXDuo.6.2.1+renesas.1.fsp.5.1.0.pack</originalPack>
-    </component>
-    <component apiversion="" class="Azure" condition="" group="NetX Duo" subgroup="nx_secure" variant="" vendor="Microsoft" version="6.2.1+renesas.1.fsp.5.1.0">
-      <description>Azure RTOS NetX Secure</description>
       <originalPack>Microsoft.NetXDuo.6.2.1+renesas.1.fsp.5.1.0.pack</originalPack>
     </component>
   </raComponentSelection>
@@ -363,10 +347,6 @@
       <property id="module.driver.ether_phy.flow_control" value="module.driver.ether_phy.flow_control.0"/>
     </module>
     <module id="module.azure.nxd.common.2101227028"/>
-    <module id="module.azure.nxd_nx_secure.2010610749"/>
-    <module id="module.azure.nxd_nx_crypto.156873832"/>
-    <module id="module.middleware.rm_netx_secure_crypto.616211185"/>
-    <module id="module.driver.sce9.plaintext.1663223308"/>
     <object id="rtos.threadx.object.queue.793177023">
       <property id="rtos.threadx.object.queue.name" value="Data Queue"/>
       <property id="rtos.threadx.object.queue.symbol" value="data_aqi_queue"/>
@@ -404,7 +384,7 @@
     <context id="rtos.threadx.thread.1170416994">
       <property id="_symbol" value="communication_thread0"/>
       <property id="rtos.threadx.thread.name" value="Communication Thread"/>
-      <property id="rtos.threadx.thread.stack" value="1024"/>
+      <property id="rtos.threadx.thread.stack" value="0x8000"/>
       <property id="rtos.threadx.thread.priority" value="6"/>
       <property id="rtos.threadx.thread.autostart" value="rtos.threadx.thread.autostart.enabled"/>
       <property id="rtos.threadx.thread.timeslice" value="1"/>
@@ -419,14 +399,6 @@
           </stack>
         </stack>
         <stack module="module.azure.nxd.packet_pool.1047636280" requires="module.azure.nxd_web_http_client.requires.nxd.packet_pool"/>
-        <stack module="module.azure.nxd_nx_secure.2010610749" requires="module.azure.nxd_web_http_client.requires.nx_secure">
-          <stack module="module.azure.nxd_nx_crypto.156873832" requires="module.azure.nxd_nx_secure.requires.nx_crypto">
-            <stack module="module.middleware.rm_netx_secure_crypto.616211185" requires="module.azure.nxd_nx_crypto.requires.nx_crypto_implementation">
-              <stack module="module.driver.sce9.plaintext.1663223308" requires="module.middleware.rm_netx_secure_crypto.requires.sce_for_nx"/>
-            </stack>
-          </stack>
-          <stack module="module.azure.nxd.common.2101227028" requires="module.azure.nxd_nx_secure.requires.nxd.common"/>
-        </stack>
       </stack>
     </context>
     <config id="config.driver.ioport">
@@ -436,20 +408,6 @@
       <property id="config.driver.sci_i2c.param_checking_enable" value="config.driver.sci_i2c.param_checking_enable.bsp"/>
       <property id="config.driver.sci_i2c.dtc_enable" value="config.driver.sci_i2c.dtc_enable.disabled"/>
       <property id="config.driver.sci_i2c.addr_mode_10_bit_enable" value="config.driver.sci_i2c.addr_mode_10_bit_enable.disabled"/>
-    </config>
-    <config id="config.middleware.rm_netx_secure_crypto">
-      <property id="config.middleware.rm_netx_secure_crypto.standalone" value="config.middleware.rm_netx_secure_crypto.standalone.disabled"/>
-      <property id="config.middleware.rm_netx_secure_crypto.trng" value="config.middleware.rm_netx_secure_crypto.trng.enabled"/>
-      <property id="config.middleware.rm_netx_secure_crypto.sha256_alt" value="config.driver.psa_crypto.sha256_alt.enabled"/>
-      <property id="config.middleware.rm_netx_secure_crypto.aes_alt" value="config.driver.psa_crypto.aes_alt.enabled"/>
-      <property id="config.middleware.rm_netx_secure_crypto.ecp_alt" value="config.driver.psa_crypto.ecp_alt.enabled"/>
-      <property id="config.middleware.rm_netx_secure_crypto.ecdsa.scratch_buffer_size" value="3016"/>
-      <property id="config.middleware.rm_netx_secure_crypto.ecdh.scratch_buffer_size" value="2464"/>
-      <property id="config.middleware.rm_netx_secure_crypto.rsa_alt" value="config.driver.psa_crypto.rsa_alt.enabled"/>
-      <property id="config.middleware.rm_netx_secure_crypto.rsa_2048_alt" value="config.middleware.rm_netx_secure_crypto.rsa_2048_alt.enabled"/>
-      <property id="config.middleware.rm_netx_secure_crypto.rsa_3072_alt" value="config.driver.psa_crypto.rsa_3072.disabled"/>
-      <property id="config.middleware.rm_netx_secure_crypto.rsa_4096_alt" value="config.driver.psa_crypto.rsa_4096.disabled"/>
-      <property id="config.middleware.rm_netx_secure_crypto.rsa.scratch_buffer_size" value="config.middleware.rm_netx_secure_crypto.rsa.scratch_buffer_size.disabled"/>
     </config>
     <config id="config.driver.ether">
       <property id="config.driver.ether.param_checking_enable" value="config.driver.ether.param_checking_enable.bsp"/>
@@ -628,7 +586,7 @@
       <property id="config.azure.nxd_web_http_common.max_password" value="20"/>
       <property id="config.azure.nxd_web_http_common.max_name" value="20"/>
       <property id="config.azure.nxd_web_http_client.min_packet_size" value="300"/>
-      <property id="config.azure.nxd_web_http_client.secure" value="config.azure.nxd_web_http_client.secure.enable"/>
+      <property id="config.azure.nxd_web_http_client.secure" value="config.azure.nxd_web_http_client.secure.disable"/>
       <property id="config.azure.nxd_smtp_client.client_tcp_window_size" value="1460"/>
       <property id="config.azure.nxd_smtp_client.client_packet_timeout" value="2"/>
       <property id="config.azure.nxd_smtp_client.client_connection_timeout" value="10"/>
@@ -884,23 +842,6 @@
     </config>
     <config id="config.driver.zmod4xxx">
       <property id="config.driver.zmod4xxx.param_checking_enable" value="config.driver.zmod4xxx.param_checking_enable.bsp"/>
-    </config>
-    <config id="config.azure.nxd_nx_secure">
-      <property id="config.azure.nxd_nx_secure.allow_self_signed_cert" value="config.azure.nxd_nx_secure.allow_self_signed_cert.Disable"/>
-      <property id="config.azure.nxd_nx_secure.client_certificate_verify" value="config.azure.nxd_nx_secure.client_certificate_verify.Disable"/>
-      <property id="config.azure.nxd_nx_secure.enable_aead_cipher" value="config.azure.nxd_nx_secure.enable_aead_cipher.Disable"/>
-      <property id="config.azure.nxd_nx_secure.enable_psk_cipher" value="config.azure.nxd_nx_secure.enable_psk_cipher.Disable"/>
-      <property id="config.azure.nxd_nx_secure.enable_ecc_cipher" value="config.azure.nxd_nx_secure.enable_ecc_cipher.Enable"/>
-      <property id="config.azure.nxd_nx_secure.x509_strict_name_compare" value="config.azure.nxd_nx_secure.x509_strict_name_compare.Disable"/>
-      <property id="config.azure.nxd_nx_secure.x509_extend_distinguished_name" value="config.azure.nxd_nx_secure.x509_extend_distinguished_name.Disable"/>
-      <property id="config.azure.nxd_nx_secure.enable_tls_v_1_3" value="config.azure.nxd_nx_secure.enable_tls_v_1_3.Enable"/>
-      <property id="config.azure.nxd_nx_secure.enable_legacy_tls_v_10" value="config.azure.nxd_nx_secure.enable_legacy_tls_v_10.Disable"/>
-      <property id="config.azure.nxd_nx_secure.enable_legacy_tls_v_11" value="config.azure.nxd_nx_secure.enable_legacy_tls_v_11.Disable"/>
-      <property id="config.azure.nxd_nx_secure.disable_tls_v_1_1_mode" value="config.azure.nxd_nx_secure.disable_tls_v_1_1_mode.Disable"/>
-      <property id="config.azure.nxd_nx_secure.disable_server" value="config.azure.nxd_nx_secure.disable_server.Enable"/>
-      <property id="config.azure.nxd_nx_secure.disable_client" value="config.azure.nxd_nx_secure.disable_client.Enable"/>
-      <property id="config.azure.nxd_nx_secure.disable_error_checking" value="config.azure.nxd_nx_secure.disable_error_checking.Enable"/>
-      <property id="config.azure.nxd_nx_secure.dtls" value="config.azure.nxd_nx_secure.dtls.Disable"/>
     </config>
   </raModuleConfiguration>
   <raPinConfiguration>

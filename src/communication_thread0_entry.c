@@ -1,10 +1,25 @@
 #include "communication_thread0.h"
 #include "server_certificate.h"
-#include  "nx_api.h"
-#include  <nx_crypto.h>
-#include  <nx_secure_tls_api.h>
-#include  <nx_secure_x509.h>
+#include "nx_api.h"
+#include <json-c/json_object.h>
+//#include <nx_crypto.h>
+//#include <nx_secure_tls_api.h>
+//#include <nx_secure_x509.h>
+#include <json-c/json.h>
+/*#include <rapidjson/document.h>
+#include <rapidjson/writer.h>
+#include <rapidjson/stringbuffer.h>*/
+#include <stdint.h>
 
+
+extern bsp_leds_t g_bsp_leds;
+typedef enum
+{
+   red = 1,
+   green = 2,
+   blue = 3,
+} led_state_t;
+void led_update_todo(led_state_t led_state, bsp_io_level_t value);
 /* Packet pool instance (If this is a Trustzone part, the memory must be placed in Non-secure memory). */
 NX_PACKET_POOL g_packet_pool0;
 
@@ -65,8 +80,7 @@ void g_ip0_quick_setup()
     // g_ip0.nx_ip_reserved_ptr = adapter_ptr;
 
     /* Set the gateway address if it is configured. Make sure this is set if using the Embedded Wireless Framework! */
-    if(IP_ADDRESS(0, 0, 0, 0) != G_IP0_GATEWAY_ADDRESS)
-    {
+    if(IP_ADDRESS(0, 0, 0, 0) != G_IP0_GATEWAY_ADDRESS){
         status = nx_ip_gateway_address_set(&g_ip0, G_IP0_GATEWAY_ADDRESS);
         assert(NX_SUCCESS == status);
     }
@@ -97,15 +111,15 @@ void g_ip0_quick_setup()
     assert(NX_SUCCESS == status);
     assert(NX_IP_LINK_ENABLED == current_state);
 }
-NX_SECURE_X509_CERT trusted_certificate;
+//NX_SECURE_X509_CERT trusted_certificate;
 #define NX_WEB_HTTP_SESSION_MAX 2
 /* Define TLS data for HTTPS. */
-CHAR crypto_metadata[8928 * NX_WEB_HTTP_SESSION_MAX];
+/*CHAR crypto_metadata[8928 * NX_WEB_HTTP_SESSION_MAX];
 UCHAR tls_packet_buffer[16500];
-NX_SECURE_X509_CERT remote_certificate, remote_issuer;
-UCHAR remote_cert_buffer[2000];
-UCHAR remote_issuer_buffer[2000];
-extern const NX_SECURE_TLS_CRYPTO nx_crypto_tls_ciphers;
+//NX_SECURE_X509_CERT remote_certificate, remote_issuer;
+UCHAR remote_cert_buffer[4096];
+UCHAR remote_issuer_buffer[4096];*/
+//extern const NX_SECURE_TLS_CRYPTO nx_crypto_tls_ciphers;
 
 /* Web HTTP Client instance. */
 NX_WEB_HTTP_CLIENT  g_web_http_client0;
@@ -130,34 +144,41 @@ void g_web_http_client0_quick_setup()
 #define MIGRATION_SIZE 100
 rm_zmod4xxx_oaq_2nd_data_t brap_data[MIGRATION_SIZE];
 
-UINT tls_setup_callback(NX_WEB_HTTP_CLIENT *client_ptr,NX_SECURE_TLS_SESSION *tls_session){
-    UINT status;
-
-    /* Initialize and create TLS session. */
-    nx_secure_tls_session_create(tls_session, &nx_crypto_tls_ciphers,crypto_metadata, sizeof(crypto_metadata));
-
-    /* Allocate space for packet reassembly. */
-    nx_secure_tls_session_packet_buffer_set(tls_session, tls_packet_buffer,sizeof(tls_packet_buffer));
-
-
-    /* Add a CA Certificate to our trusted store for verifying incoming server
-        certificates. */
-    nx_secure_x509_certificate_initialize(&trusted_certificate,(UCHAR *) g_server_certificate, strlen(g_server_certificate),
-            NX_NULL, 0, NULL, 0,NX_SECURE_X509_KEY_TYPE_NONE);
-    nx_secure_tls_trusted_certificate_add(tls_session, &trusted_certificate);
-
-    /* Need to allocate space for the certificate coming in from the remote host. */
-    nx_secure_tls_remote_certificate_allocate(tls_session, &remote_certificate,
-        remote_cert_buffer, sizeof(remote_cert_buffer));
-    nx_secure_tls_remote_certificate_allocate(tls_session,
-        &remote_issuer, remote_issuer_buffer,
-        sizeof(remote_issuer_buffer));
-
-    return(NX_SUCCESS);
- }
+//UINT tls_setup_callback(NX_WEB_HTTP_CLIENT *client_ptr,NX_SECURE_TLS_SESSION *tls_session){
+//    UINT status;
+//    FSP_PARAMETER_NOT_USED(status);
+//
+//    /* Initialize and create TLS session. */
+//    nx_secure_tls_session_create(tls_session, &nx_crypto_tls_ciphers,crypto_metadata, sizeof(crypto_metadata));
+//
+//    /* Allocate space for packet reassembly. */
+//    nx_secure_tls_session_packet_buffer_set(tls_session, tls_packet_buffer,sizeof(tls_packet_buffer));
+//
+//
+//    /* Add a CA Certificate to our trusted store for verifying incoming server
+//        certificates. */
+//    nx_secure_x509_certificate_initialize(&trusted_certificate,
+//            (UCHAR *) g_server_certificate, (USHORT)strlen(g_server_certificate),
+//            NX_NULL, 0, NX_NULL, 0,NX_SECURE_X509_KEY_TYPE_NONE);
+//
+//    nx_secure_tls_trusted_certificate_add(tls_session, &trusted_certificate);
+//
+//    /* Need to allocate space for the certificate coming in from the remote host. */
+//    nx_secure_tls_remote_certificate_allocate(tls_session, &remote_certificate,
+//        remote_cert_buffer, sizeof(remote_cert_buffer));
+//    nx_secure_tls_remote_certificate_allocate(tls_session,
+//        &remote_issuer, remote_issuer_buffer,
+//        sizeof(remote_issuer_buffer));
+//
+//    return(NX_SUCCESS);
+// }
 
 #define HOST_HEADER "Host"
 #define HOST_HEADER_SIZE 5
+//FILL THIS,  IS REALLY IMPORTANT
+const float lat =0.0;
+const float lon =0.0;
+const char mac[] = "74:90:50:10:89:0F";
 /* Communication Thread entry function */
 void communication_thread0_entry(void){
     int __index=0;
@@ -167,17 +188,32 @@ void communication_thread0_entry(void){
     g_ip0_quick_setup();
     g_web_http_client0_quick_setup();
     /* Setup the platform; initialize the SCE and the TRNG */
-    uint32_t err = nx_crypto_initialize();
+    /*uint32_t err = nx_crypto_initialize();
     assert(NX_CRYPTO_SUCCESS == err);
 
-    nx_secure_tls_initialize();
+    nx_secure_tls_initialize();*/
     //_nx_web_http_client_get_secure_start(NX_WEB_HTTP_CLIENT *client_ptr, NXD_ADDRESS *server_ip, UINT server_port, CHAR *resource,CHAR *host, CHAR *username, CHAR *password,UINT (*tls_setup)(NX_WEB_HTTP_CLIENT *client_ptr, NX_SECURE_TLS_SESSION *),ULONG wait_option);
     //nx_web_http_client_secure_connect(&g_web_http_client0, &end_point, 443,tls_setup_callback, TX_WAIT_FOREVER);
 
     volatile UINT _t = NX_SUCCESS;
 
 
-    _t =  nx_web_http_client_get_secure_start(&g_web_http_client0, &end_point, 443,HOST_END_POINT,(CHAR *)"/api/v1/User","", "", tls_setup_callback, TX_WAIT_FOREVER);
+    _t =  nx_web_http_client_get_start(&g_web_http_client0, &end_point, 80,HOST_END_POINT,(CHAR *)"/api/v1/User",NX_NULL, NX_NULL, TX_WAIT_FOREVER);
+   // _t =  nx_web_http_client_get_secure_start(&g_web_http_client0, &end_point, 443,HOST_END_POINT,(CHAR *)"/api/v1/User",NX_NULL, NX_NULL, tls_setup_callback, TX_WAIT_FOREVER);
+    if(_t != NX_SUCCESS){
+
+        led_update_todo(red, BSP_IO_LEVEL_HIGH);
+        return;
+    }
+    //warn user its ready to go
+    for(int i=9; i>0; i--){
+        led_update_todo(blue, BSP_IO_LEVEL_HIGH);
+        R_BSP_SoftwareDelay(250, BSP_DELAY_UNITS_MILLISECONDS);
+        led_update_todo(blue, BSP_IO_LEVEL_LOW);
+	}
+
+
+
     //apparently microsoft thought putting a HOST header on this made sense(which although it eases the process with azure or any other cloud/vps/ any serious provider, they underestimate the lack of money there is);
 
    //_f = nx_web_http_client_request_header_add(&g_web_http_client0, (CHAR *)HOST_HEADER, HOST_HEADER_SIZE,(CHAR *) HOST_END_POINT, HOST_END_POINT_SIZE(), TX_WAIT_FOREVER);
@@ -187,15 +223,86 @@ void communication_thread0_entry(void){
     while (1){
         while(__index<=MIGRATION_SIZE || data_aqi_queue.tx_queue_enqueued>0 ){
             tx_queue_receive(&data_aqi_queue,(rm_zmod4xxx_oaq_2nd_data_t *)&brap_data[__index], TX_WAIT_FOREVER);
+			__index++;
         }
 
-        //nx_http_client_put_start(&my_client, &server_ip_address, "/client_test.htm", "name", "password", 103, 500);
+			//start the post request
+		/**
+		* structure:
+		*[
+		*	{
+		*		"origin": "string",
+		*		"lat": 0,
+		*		"lon": 0,
+		*       "data": {
+		*
+		*		}
+		*	}
+		*]
+		**/
+		json_object *root = json_object_new_object();
 
-        __index=0;
+        for(UINT i = 0; i < __index; i++){
+			//create a json object that contains origin which is the mac address, lat, lon
+			json_object *json = json_object_new_object(); 
+			json_object_object_add(json, "origin", json_object_new_string(mac));
+			json_object_object_add(json, "lat", json_object_new_double((float)lat));
+			json_object_object_add(json, "lon", json_object_new_double(lon));
+			//create a json object that contains the data
+			json_object *data = json_object_new_object();
+			json_object_object_add(data, "aqi", json_object_new_int((int32_t)brap_data[i].epa_aqi));
+			json_object_object_add(data, "fast_aqi", json_object_new_int((int32_t)brap_data[i].fast_aqi));
+			json_object_object_add(data, "ozone_ppmm", json_object_new_double(brap_data[i].ozone_concentration));
+			json_object *farray = json_object_new_array();
+				
+			for(int _i = 0; _i < sizeof(8); i++){
+		        //_i to string
+
+				json_object_array_add(farray, json_object_new_double(brap_data[i].rmox[_i]));
+
+
+
+			}
+			json_object_object_add(data, "rmox", farray);
+			json_object_object_add(json, "data", data);
+			json_object_array_add(root, json);
+
+		}
+		__index=0;
+		char *json_string = json_object_to_json_string(root);
 		
-
+		//send the request
+		//_t = nx_web_http_client_post_start(&g_web_http_client0, &end_point, 80, HOST_END_POINT,(CHAR *)"/api/v1/Measurement",json_string, strlen(json_string), NX_NULL, NX_NULL, TX_WAIT_FOREVER);
 
 
         tx_thread_sleep (1);
     }
 }
+
+void led_update_todo(led_state_t led_state, bsp_io_level_t value){
+    //BSP_IO_LEVEL_LOW
+    //BSP_IO_LEVEL_HIGH
+   R_BSP_PinAccessEnable();
+    switch(led_state){
+        case red:{
+
+            R_IOPORT_PinWrite(&g_ioport_ctrl, (bsp_io_port_pin_t) g_bsp_leds.p_leds[2], value);
+            break;
+        }
+        case green:{
+            R_IOPORT_PinWrite(&g_ioport_ctrl, (bsp_io_port_pin_t) g_bsp_leds.p_leds[1], value);
+
+            break;
+        }
+        case blue:{
+            /* Blue LED state is made high to show operation is in progress */
+            R_IOPORT_PinWrite(&g_ioport_ctrl, (bsp_io_port_pin_t) g_bsp_leds.p_leds[0], value);
+            break;
+        }
+        default:{
+            break;
+        }
+    }
+    R_BSP_PinAccessDisable();
+}
+
