@@ -2,6 +2,7 @@
 #include "server_certificate.h"
 #include "nx_api.h"
 /*#include <json_object.h>
+#include <cstring>
 #include <json.h>*/
 //#include <nx_crypto.h>
 //#include <nx_secure_tls_api.h>
@@ -22,7 +23,7 @@ typedef enum
    blue = 3,
 } led_state_t;
 void led_update_todo(led_state_t led_state, bsp_io_level_t value);
-/* Packet pool instance (If this is a Trustzone part, the memory must be placed in Non-secure memory). */
+/* Packet l instance (If this is a Trustzone part, the memory must be placed in Non-secure memory). */
 NX_PACKET_POOL g_packet_pool0;
 
 #if defined(ETHER_BUFFER_PLACE_IN_SECTION)
@@ -280,12 +281,15 @@ void communication_thread0_entry(void){
 		rapidjson::StringBuffer strbuf;
 		rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
 		document.Accept(writer);
-		const char* json_string = strbuf.GetString();
+		const char* _json_string = strbuf.GetString();
+		 
+		NX_PACKET   *packet;
+		nx_web_http_client_request_packet_allocate(&g_web_http_client0, &packet, NX_WAIT_FOREVER);
 
-		
-		//send the request
-		_t = nx_web_http_client_post_start(&g_web_http_client0, &end_point, 80, HOST_END_POINT,(CHAR *)"/api/v1/AirQuality/quality_air",json_string, strlen(json_string), NX_NULL, NX_NULL, TX_WAIT_FOREVER);
-
+		//NX_WEB_HTTP_CLIENT *client_ptr, NXD_ADDRESS *server_ip, UINT server_port, CHAR *resource, CHAR *host, CHAR *username, CHAR *password, ULONG total_bytes, ULONG wait_option
+		_t = nx_web_http_client_post_start(&g_web_http_client0, &end_point, 80, HOST_END_POINT,(CHAR *)"/api/v1/AirQuality/quality_air", NX_NULL, NX_NULL, strlen(_json_string), TX_WAIT_FOREVER);
+		nx_packet_data_append(packet,(void *) _json_string, strlen(_json_string), &g_packet_pool0, NX_WAIT_FOREVER);
+		nx_web_http_client_put_packet(&g_web_http_client0, packet, 200);
 
         tx_thread_sleep (1);
     }
