@@ -1,14 +1,16 @@
 #include "communication_thread0.h"
 #include "server_certificate.h"
 #include "nx_api.h"
-#include <json-c/json_object.h>
+/*#include <json_object.h>
+#include <json.h>*/
 //#include <nx_crypto.h>
 //#include <nx_secure_tls_api.h>
 //#include <nx_secure_x509.h>
-#include <json-c/json.h>
-/*#include <rapidjson/document.h>
-#include <rapidjson/writer.h>
-#include <rapidjson/stringbuffer.h>*/
+
+#include <document.h>
+#include <writer.h>
+#include <stringbuffer.h>
+
 #include <stdint.h>
 
 
@@ -240,39 +242,49 @@ void communication_thread0_entry(void){
 		*	}
 		*]
 		**/
-		json_object *root = json_object_new_object();
-
-        for(UINT i = 0; i < __index; i++){
-			//create a json object that contains origin which is the mac address, lat, lon
-			json_object *json = json_object_new_object(); 
-			json_object_object_add(json, "origin", json_object_new_string(mac));
-			json_object_object_add(json, "lat", json_object_new_double((float)lat));
-			json_object_object_add(json, "lon", json_object_new_double(lon));
-			//create a json object that contains the data
-			json_object *data = json_object_new_object();
-			json_object_object_add(data, "aqi", json_object_new_int((int32_t)brap_data[i].epa_aqi));
-			json_object_object_add(data, "fast_aqi", json_object_new_int((int32_t)brap_data[i].fast_aqi));
-			json_object_object_add(data, "ozone_ppmm", json_object_new_double(brap_data[i].ozone_concentration));
-			json_object *farray = json_object_new_array();
-				
+		
+		rapidjson::Document document;
+		document.SetArray();
+		rapidjson::Document::AllocatorType& allocator = document.GetAllocator();
+		for(UINT i = 0; i < __index; i++){
+			rapidjson::Value json(rapidjson::kObjectType);
+			rapidjson::Value data(rapidjson::kObjectType);
+			rapidjson::Value farray(rapidjson::kArrayType);
+			rapidjson::Value origin(rapidjson::kStringType);
+			rapidjson::Value lat__(rapidjson::kNumberType);
+			rapidjson::Value lon__(rapidjson::kNumberType);
+			rapidjson::Value aqi(rapidjson::kNumberType);
+			rapidjson::Value fast_aqi(rapidjson::kNumberType);
+			rapidjson::Value ozone_ppmm(rapidjson::kNumberType);
+			rapidjson::Value rmox(rapidjson::kArrayType);
+			origin.SetString(mac, allocator);
+			lat__.SetFloat(lat);
+			lon__.SetFloat(lon);
+			aqi.SetInt((int32_t)brap_data[i].epa_aqi);
+			fast_aqi.SetInt((int32_t)brap_data[i].fast_aqi);
+			ozone_ppmm.SetDouble(brap_data[i].ozone_concentration);
 			for(int _i = 0; _i < sizeof(8); i++){
-		        //_i to string
-
-				json_object_array_add(farray, json_object_new_double(brap_data[i].rmox[_i]));
-
-
-
+				rmox.PushBack(brap_data[i].rmox[_i], allocator);
 			}
-			json_object_object_add(data, "rmox", farray);
-			json_object_object_add(json, "data", data);
-			json_object_array_add(root, json);
-
+			data.AddMember("aqi", aqi, allocator);
+			data.AddMember("fast_aqi", fast_aqi, allocator);
+			data.AddMember("ozone_ppmm", ozone_ppmm, allocator);
+			data.AddMember("rmox", rmox, allocator);
+			json.AddMember("origin", origin, allocator);
+			json.AddMember("lat", lat__, allocator);
+			json.AddMember("lon", lon__, allocator);
+			json.AddMember("data", data, allocator);
+			document.PushBack(json, allocator);
 		}
 		__index=0;
-		char *json_string = json_object_to_json_string(root);
+		rapidjson::StringBuffer strbuf;
+		rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
+		document.Accept(writer);
+		const char* json_string = strbuf.GetString();
+
 		
 		//send the request
-		//_t = nx_web_http_client_post_start(&g_web_http_client0, &end_point, 80, HOST_END_POINT,(CHAR *)"/api/v1/Measurement",json_string, strlen(json_string), NX_NULL, NX_NULL, TX_WAIT_FOREVER);
+		_t = nx_web_http_client_post_start(&g_web_http_client0, &end_point, 80, HOST_END_POINT,(CHAR *)"/api/v1/AirQuality/quality_air",json_string, strlen(json_string), NX_NULL, NX_NULL, TX_WAIT_FOREVER);
 
 
         tx_thread_sleep (1);
