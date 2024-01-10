@@ -2,16 +2,21 @@
 #include "server_certificate.h"
 #include "nx_api.h"
 /*#include <json_object.h>
+#include <cstddef>
 #include <cstring>
 #include <json.h>*/
 //#include <nx_crypto.h>
 //#include <nx_secure_tls_api.h>
 //#include <nx_secure_x509.h>
 
-#include <document.h>
+/*#include <document.h>
+#include <string>
 #include <writer.h>
-#include <stringbuffer.h>
-
+#include <stringbuffer.h>*/
+#include <string>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <stdint.h>
 
 
@@ -179,11 +184,14 @@ rm_zmod4xxx_oaq_2nd_data_t brap_data[MIGRATION_SIZE];
 #define HOST_HEADER "Host"
 #define HOST_HEADER_SIZE 5
 //FILL THIS,  IS REALLY IMPORTANT
-const float lat =0.0;
-const float lon =0.0;
+const float lat =-8.0;
+const float lon =30.0;
 const char mac[] = "74:90:50:10:89:0F";
 /* Communication Thread entry function */
 void communication_thread0_entry(void){
+
+    R_SCI_UART_Open(&g_uart0_ctrl, &g_uart0_cfg);
+
     int __index=0;
     nx_system_initialize();
     g_packet_pool0_quick_setup();
@@ -201,7 +209,7 @@ void communication_thread0_entry(void){
     volatile UINT _t = NX_SUCCESS;
 
 
-    _t =  nx_web_http_client_get_start(&g_web_http_client0, &end_point, 80,HOST_END_POINT,(CHAR *)"/api/v1/User",NX_NULL, NX_NULL, TX_WAIT_FOREVER);
+    _t =  nx_web_http_client_get_start(&g_web_http_client0, &end_point, 80,(CHAR *)"/api/v1/User",HOST_END_POINT,NX_NULL, NX_NULL, TX_WAIT_FOREVER);
    // _t =  nx_web_http_client_get_secure_start(&g_web_http_client0, &end_point, 443,HOST_END_POINT,(CHAR *)"/api/v1/User",NX_NULL, NX_NULL, tls_setup_callback, TX_WAIT_FOREVER);
     if(_t != NX_SUCCESS){
 
@@ -209,12 +217,20 @@ void communication_thread0_entry(void){
         return;
     }
     //warn user its ready to go
-    for(int i=9; i>0; i--){
+    for(int i=3; i>0; i--){
         led_update_todo(blue, BSP_IO_LEVEL_HIGH);
         R_BSP_SoftwareDelay(250, BSP_DELAY_UNITS_MILLISECONDS);
         led_update_todo(blue, BSP_IO_LEVEL_LOW);
+        R_BSP_SoftwareDelay(250, BSP_DELAY_UNITS_MILLISECONDS);
 	}
+	char json_format []= "[{\"origin\":\"%s\",\"lat\":%i,\"lon\":%i,\"data\":{\"aqi\":%i,\"fast_aqi\":%i,\"ozone_ppmm\":%i}}}]";
+	char json_string [2048];
 
+
+
+
+
+   
 
 
     //apparently microsoft thought putting a HOST header on this made sense(which although it eases the process with azure or any other cloud/vps/ any serious provider, they underestimate the lack of money there is);
@@ -224,73 +240,44 @@ void communication_thread0_entry(void){
 
 
     while (1){
-        while(__index<=MIGRATION_SIZE || data_aqi_queue.tx_queue_enqueued>0 ){
-            tx_queue_receive(&data_aqi_queue,(rm_zmod4xxx_oaq_2nd_data_t *)&brap_data[__index], TX_WAIT_FOREVER);
+        while( data_aqi_queue.tx_queue_enqueued>0 ){
+            if(__index>=MIGRATION_SIZE){
+                break; //TO lazy to think...
+            }
+            tx_queue_receive(&data_aqi_queue,(rm_zmod4xxx_oaq_2nd_data_t *)&brap_data[__index], 100);
 			__index++;
         }
 
-			//start the post request
-		/**
-		* structure:
-		*[
-		*	{
-		*		"origin": "string",
-		*		"lat": 0,
-		*		"lon": 0,
-		*       "data": {
-		*
-		*		}
-		*	}
-		*]
-		**/
-		
-		rapidjson::Document document;
-		document.SetArray();
-		rapidjson::Document::AllocatorType& allocator = document.GetAllocator();
-		for(UINT i = 0; i < __index; i++){
-			rapidjson::Value json(rapidjson::kObjectType);
-			rapidjson::Value data(rapidjson::kObjectType);
-			rapidjson::Value farray(rapidjson::kArrayType);
-			rapidjson::Value origin(rapidjson::kStringType);
-			rapidjson::Value lat__(rapidjson::kNumberType);
-			rapidjson::Value lon__(rapidjson::kNumberType);
-			rapidjson::Value aqi(rapidjson::kNumberType);
-			rapidjson::Value fast_aqi(rapidjson::kNumberType);
-			rapidjson::Value ozone_ppmm(rapidjson::kNumberType);
-			rapidjson::Value rmox(rapidjson::kArrayType);
-			origin.SetString(mac, allocator);
-			lat__.SetFloat(lat);
-			lon__.SetFloat(lon);
-			aqi.SetInt((int32_t)brap_data[i].epa_aqi);
-			fast_aqi.SetInt((int32_t)brap_data[i].fast_aqi);
-			ozone_ppmm.SetDouble(brap_data[i].ozone_concentration);
-			for(int _i = 0; _i < sizeof(8); i++){
-				rmox.PushBack(brap_data[i].rmox[_i], allocator);
-			}
-			data.AddMember("aqi", aqi, allocator);
-			data.AddMember("fast_aqi", fast_aqi, allocator);
-			data.AddMember("ozone_ppmm", ozone_ppmm, allocator);
-			data.AddMember("rmox", rmox, allocator);
-			json.AddMember("origin", origin, allocator);
-			json.AddMember("lat", lat__, allocator);
-			json.AddMember("lon", lon__, allocator);
-			json.AddMember("data", data, allocator);
-			document.PushBack(json, allocator);
-		}
-		__index=0;
-		rapidjson::StringBuffer strbuf;
-		rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
-		document.Accept(writer);
-		const char* _json_string = strbuf.GetString();
-		 
+		//for(int i=0; i<__index; i++){
+		//}
+
+
+		sprintf(json_string, json_format, mac,(int)lat,(int)lon, brap_data[0].epa_aqi, (int)brap_data[0].fast_aqi,brap_data[0].ozone_concentration);
+		R_SCI_UART_Write(&g_uart0_ctrl, (const uint8_t *)json_string, strlen(json_string));
 		NX_PACKET   *packet;
+		auto size = strlen(json_string);
+		_t = nx_web_http_client_connect(&g_web_http_client0, &end_point, 80, 500);
+		nx_web_http_client_request_initialize(&g_web_http_client0,
+			NX_WEB_HTTP_METHOD_POST,
+			(CHAR *)"/api/v1/AirQuality/quality_air",
+			HOST_END_POINT,
+			size, //actual_size, // Size of data to send including resource
+			NX_FALSE,
+			NX_NULL,
+			NX_NULL,
+			3 * NX_IP_PERIODIC_RATE);
+		nx_web_http_client_request_header_add(&g_web_http_client0,"Accept",strlen("Accept"),"application/json",strlen("application/json"),1000);
+
+		nx_web_http_client_request_header_add(&g_web_http_client0,"Content-Type",strlen("Content-Type"),"application/json",strlen("application/json"),1000);
+
+		nx_web_http_client_request_send(&g_web_http_client0, 1000);
 		nx_web_http_client_request_packet_allocate(&g_web_http_client0, &packet, NX_WAIT_FOREVER);
+		nx_packet_data_append(packet,(void *) json_string, size, &g_packet_pool0, NX_WAIT_FOREVER);
+		nx_web_http_client_request_packet_send(&g_web_http_client0, packet,0, 200);
+		
 
-		//NX_WEB_HTTP_CLIENT *client_ptr, NXD_ADDRESS *server_ip, UINT server_port, CHAR *resource, CHAR *host, CHAR *username, CHAR *password, ULONG total_bytes, ULONG wait_option
-		_t = nx_web_http_client_post_start(&g_web_http_client0, &end_point, 80, HOST_END_POINT,(CHAR *)"/api/v1/AirQuality/quality_air", NX_NULL, NX_NULL, strlen(_json_string), TX_WAIT_FOREVER);
-		nx_packet_data_append(packet,(void *) _json_string, strlen(_json_string), &g_packet_pool0, NX_WAIT_FOREVER);
-		nx_web_http_client_put_packet(&g_web_http_client0, packet, 200);
-
+		__index=0;
+		
         tx_thread_sleep (1);
     }
 }
